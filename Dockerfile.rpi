@@ -3,7 +3,7 @@ FROM ${ARCH}/alpine:3.12
 
 RUN passwd -l root ; \
     apk add --update --upgrade bash curl libtool && \
-    apk add --update --upgrade alpine-sdk git flex bison libtool-dev autoconf && \
+    apk add --update --upgrade alpine-sdk git flex bison autoconf && \
     mkdir -p /usr/src && \
     cd /usr/src && \
     git clone --depth 1 https://github.com/stedolan/jq.git && \
