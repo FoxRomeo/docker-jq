@@ -13,13 +13,5 @@ RUN passwd -l root ; \
     ./configure --with-oniguruma=builtin && \
     make -j8 && \
     make check && \
-    make install
-
-
-#    cp squeezelite /usr/bin && \
-#    cd / && \
-#    rm -rf /usr/src && \
-#    apk del alpine-sdk git flex bison libtool-dev autoconf && \
-
-
-
+    make install && \
+    apk del alpine-sdk flex bison autoconf automake
