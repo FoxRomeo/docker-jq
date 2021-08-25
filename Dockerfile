@@ -1,13 +1,12 @@
 ARG ARCH=
 FROM ${ARCH}/alpine:3.12
 
-COPY run-squeezelite.sh /run-squeezelite.sh
 RUN passwd -l root ; \
     apk add --update --upgrade bash curl libtool && \
     apk add --update --upgrade alpine-sdk git flex bison libtool-dev autoconf && \
     mkdir -p /usr/src && \
     cd /usr/src && \
-    git clone https://github.com/stedolan/jq.git && \
+    git clone --depth 1 https://github.com/stedolan/jq.git && \
     cd jq && \
     git submodule update --init && \
     autoreconf -fi && \
