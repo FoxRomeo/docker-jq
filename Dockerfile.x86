@@ -1,5 +1,5 @@
-ARG ARCH=
-FROM ${ARCH}/alpine:latest
+FROM <<BASECONTAINER>>
+MAINTAINER docker@intrepid.de
 
 USER root
 RUN passwd -l root ; \
