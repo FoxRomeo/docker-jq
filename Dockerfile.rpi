@@ -1,6 +1,7 @@
 ARG ARCH=
 FROM ${ARCH}/alpine:3.12
 
+USER root
 RUN passwd -l root ; \
     apk add --update --upgrade bash curl libtool && \
     apk add --update --upgrade alpine-sdk git flex bison autoconf automake && \
