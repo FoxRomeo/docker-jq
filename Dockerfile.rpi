@@ -17,5 +17,4 @@ RUN passwd -l root ; \
     make install && \
     apk del alpine-sdk flex bison autoconf automake
 
-
-
+CMD ["/usr/bin/bash"]
