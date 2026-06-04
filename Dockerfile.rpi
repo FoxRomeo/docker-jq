@@ -15,7 +15,7 @@ RUN passwd -l root ; \
     git submodule update --init && \
     autoreconf -fi && \
     ./configure --with-oniguruma=builtin && \
-    make -j8 && \
+    make -j2 && \
     make check && \
     make install && \
     apk del alpine-sdk flex bison autoconf automake
