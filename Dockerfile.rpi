@@ -2,6 +2,8 @@ FROM <<BASECONTAINER>>
 
 LABEL maintainer="docker@intrepid.de"
 
+ARG TARGETARCH
+
 USER root
 RUN passwd -l root ; \
     apk add --update --upgrade bash curl libtool && \
