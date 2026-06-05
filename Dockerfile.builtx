@@ -1,5 +1,7 @@
+ARG BUILDPLATFORM
+
 # ── amd64: native build on Ubuntu ────────────────────────────────────────────
-FROM --platform=linux/amd64 <<BUILDCONTAINER>> AS build-amd64
+FROM --platform=$BUILDPLATFORM <<BUILDCONTAINER>> AS build-amd64
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -qy \
       build-essential git flex bison autoconf automake libtool
@@ -14,7 +16,7 @@ RUN mkdir -p /usr/src && cd /usr/src \
     && make install DESTDIR=/output
 
 # ── arm64: cross-compiled on Ubuntu amd64 ────────────────────────────────────
-FROM --platform=linux/amd64 <<BUILDCONTAINER>> AS build-arm64
+FROM --platform=$BUILDPLATFORM <<BUILDCONTAINER>> AS build-arm64
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -qy \
       build-essential git flex bison autoconf automake libtool \
@@ -36,7 +38,7 @@ RUN mkdir -p /usr/src && cd /usr/src \
     && make install DESTDIR=/output
 
 # ── arm/v6: cross-compiled on Ubuntu amd64 ───────────────────────────────────
-FROM --platform=linux/amd64 <<BUILDCONTAINER>> AS build-armv6
+FROM --platform=$BUILDPLATFORM <<BUILDCONTAINER>> AS build-armv6
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -qy \
       build-essential git flex bison autoconf automake libtool \
