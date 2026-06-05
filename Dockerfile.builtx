@@ -20,7 +20,11 @@ FROM --platform=$BUILDPLATFORM <<BUILDCONTAINER>> AS build-arm64
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -qy \
       build-essential git flex bison autoconf automake libtool \
-      gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu libc6-dev-arm64-cross
+      gcc-aarch64-linux-gnu \
+      binutils-aarch64-linux-gnu \
+      libc6-dev-arm64-cross \
+      libgcc-s1-arm64-cross \
+      linux-libc-dev-arm64-cross
 RUN mkdir -p /usr/src && cd /usr/src \
     && git clone --depth 1 https://github.com/stedolan/jq.git \
     && cd jq \
