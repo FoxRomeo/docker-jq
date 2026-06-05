@@ -50,6 +50,12 @@ RUN apt-get update && apt-get install -qy \
       libc6-dev-armhf-cross \
       libgcc-s1-armhf-cross \
       linux-libc-dev-armhf-cross
+RUN echo "int main(){return 0;}" > /tmp/test.c \
+    && arm-linux-gnueabihf-gcc \
+         -march=armv6 -mfpu=vfp -mfloat-abi=hard -static \
+         -o /tmp/test /tmp/test.c \
+    && echo "Compiler OK" \
+    || (arm-linux-gnueabihf-gcc -v 2>&1; exit 1)
 RUN mkdir -p /usr/src && cd /usr/src \
     && git clone --depth 1 https://github.com/stedolan/jq.git \
     && cd jq \
