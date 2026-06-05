@@ -40,7 +40,10 @@ FROM --platform=linux/amd64 <<BUILDCONTAINER>> AS build-armv6
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -qy \
       build-essential git flex bison autoconf automake libtool \
-      gcc-arm-linux-gnueabihf binutils-arm-linux-gnueabihf libc6-dev-armhf-cross
+      gcc-arm-linux-gnueabihf binutils-arm-linux-gnueabihf \
+      libc6-dev-armhf-cross \
+      libgcc-s1-armhf-cross \
+      linux-libc-dev-armhf-cross
 RUN mkdir -p /usr/src && cd /usr/src \
     && git clone --depth 1 https://github.com/stedolan/jq.git \
     && cd jq \
