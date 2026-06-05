@@ -79,7 +79,7 @@ LABEL maintainer="docker@intrepid.de"
 ARG TARGETARCH
 ARG TARGETVARIANT
 
-UER root
+USER root
 
 COPY --from=build-amd64 /output/usr/local/bin/jq /jq-amd64
 COPY --from=build-arm64 /output/usr/local/bin/jq /jq-arm64
