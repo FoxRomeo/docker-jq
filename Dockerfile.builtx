@@ -66,13 +66,11 @@ ARG TARGETVARIANT
 
 COPY --from=build-amd64 /output/usr/local/bin/jq /jq-amd64
 COPY --from=build-arm64 /output/usr/local/bin/jq /jq-arm64
-COPY --from=build-armv7 /output/usr/local/bin/jq /jq-armv7
 COPY --from=build-armv6 /output/usr/local/bin/jq /jq-armv6
 
 RUN case "${TARGETARCH}/${TARGETVARIANT}" in \
       "amd64/")   cp /jq-amd64 /usr/local/bin/jq ;; \
       "arm64/")   cp /jq-arm64 /usr/local/bin/jq ;; \
-      "arm/v7")   cp /jq-armv7 /usr/local/bin/jq ;; \
       "arm/v6")   cp /jq-armv6 /usr/local/bin/jq ;; \
       *)          echo "Unsupported: ${TARGETARCH}/${TARGETVARIANT}"; exit 1 ;; \
     esac \
