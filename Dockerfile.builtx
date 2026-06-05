@@ -1,0 +1,82 @@
+# ── amd64: native build on Ubuntu ────────────────────────────────────────────
+FROM --platform=linux/amd64 <<BUILDCONTAINER>> AS build-amd64
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -qy \
+      build-essential git flex bison autoconf automake libtool
+RUN mkdir -p /usr/src && cd /usr/src \
+    && git clone --depth 1 https://github.com/stedolan/jq.git \
+    && cd jq \
+    && git submodule update --init \
+    && autoreconf -fi \
+    && LDFLAGS="-static" \
+       ./configure --with-oniguruma=builtin --prefix=/usr/local \
+    && make -j$(nproc) \
+    && make install DESTDIR=/output
+
+# ── arm64: cross-compiled on Ubuntu amd64 ────────────────────────────────────
+FROM --platform=linux/amd64 <<BUILDCONTAINER>> AS build-arm64
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -qy \
+      build-essential git flex bison autoconf automake libtool \
+      gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu libc6-dev-arm64-cross
+RUN mkdir -p /usr/src && cd /usr/src \
+    && git clone --depth 1 https://github.com/stedolan/jq.git \
+    && cd jq \
+    && git submodule update --init \
+    && autoreconf -fi \
+    && CC=aarch64-linux-gnu-gcc \
+       AR=aarch64-linux-gnu-ar \
+       RANLIB=aarch64-linux-gnu-ranlib \
+       LDFLAGS="-static" \
+       ./configure \
+           --host=aarch64-linux-gnu \
+           --with-oniguruma=builtin \
+           --prefix=/usr/local \
+    && make -j$(nproc) \
+    && make install DESTDIR=/output
+
+# ── arm/v6: cross-compiled on Ubuntu amd64 ───────────────────────────────────
+FROM --platform=linux/amd64 <<BUILDCONTAINER>> AS build-armv6
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -qy \
+      build-essential git flex bison autoconf automake libtool \
+      gcc-arm-linux-gnueabihf binutils-arm-linux-gnueabihf libc6-dev-armhf-cross
+RUN mkdir -p /usr/src && cd /usr/src \
+    && git clone --depth 1 https://github.com/stedolan/jq.git \
+    && cd jq \
+    && git submodule update --init \
+    && autoreconf -fi \
+    && CC=arm-linux-gnueabihf-gcc \
+       AR=arm-linux-gnueabihf-ar \
+       RANLIB=arm-linux-gnueabihf-ranlib \
+       CFLAGS="-march=armv6 -mfpu=vfp -mfloat-abi=hard" \
+       LDFLAGS="-static" \
+       ./configure \
+           --host=arm-linux-gnueabihf \
+           --with-oniguruma=builtin \
+           --prefix=/usr/local \
+    && make -j$(nproc) \
+    && make install DESTDIR=/output
+
+# ── Final Alpine image ────────────────────────────────────────────────────────
+FROM <<BASECONTAINER>>
+LABEL maintainer="docker@intrepid.de"
+ARG TARGETARCH
+ARG TARGETVARIANT
+
+COPY --from=build-amd64 /output/usr/local/bin/jq /jq-amd64
+COPY --from=build-arm64 /output/usr/local/bin/jq /jq-arm64
+COPY --from=build-armv7 /output/usr/local/bin/jq /jq-armv7
+COPY --from=build-armv6 /output/usr/local/bin/jq /jq-armv6
+
+RUN case "${TARGETARCH}/${TARGETVARIANT}" in \
+      "amd64/")   cp /jq-amd64 /usr/local/bin/jq ;; \
+      "arm64/")   cp /jq-arm64 /usr/local/bin/jq ;; \
+      "arm/v7")   cp /jq-armv7 /usr/local/bin/jq ;; \
+      "arm/v6")   cp /jq-armv6 /usr/local/bin/jq ;; \
+      *)          echo "Unsupported: ${TARGETARCH}/${TARGETVARIANT}"; exit 1 ;; \
+    esac \
+    && rm -f /jq-amd64 /jq-arm64 /jq-armv7 /jq-armv6 \
+    && chmod +x /usr/local/bin/jq
+
+CMD ["/bin/bash"]
