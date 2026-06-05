@@ -89,7 +89,7 @@ RUN case "${TARGETARCH}/${TARGETVARIANT}" in \
       "arm/v6")   cp /jq-armv6 /usr/local/bin/jq ;; \
       *)          echo "Unsupported: ${TARGETARCH}/${TARGETVARIANT}"; exit 1 ;; \
     esac \
-    && rm -f /jq-amd64 /jq-arm64 /jq-armv7 /jq-armv6 \
+    && rm -f /jq-amd64 /jq-arm64 /jq-armv6 \
     && chmod +x /usr/local/bin/jq
 
 CMD ["/bin/bash"]
