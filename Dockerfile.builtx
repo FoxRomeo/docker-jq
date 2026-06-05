@@ -1,95 +1,64 @@
-FROM --platform=linux/amd64 <<BASECONTAINER>> AS build-amd64
-LABEL maintainer="docker@intrepid.de"
-USER root
-RUN passwd -l root ; \
-    apk add --update --upgrade bash curl libtool && \
-    apk add --update --upgrade alpine-sdk git flex bison autoconf automake && \
-    mkdir -p /usr/src && \
-    cd /usr/src && \
-    git clone --depth 1 https://github.com/stedolan/jq.git && \
-    cd jq && \
-    git submodule update --init && \
-    autoreconf -fi && \
-    ./configure --with-oniguruma=builtin --prefix=/usr/local && \
-    make -j$(nproc) && \
-    make install DESTDIR=/output
+# ── amd64: native build on Ubuntu ────────────────────────────────────────────
+FROM --platform=linux/amd64 <<BUILDCONTAINER>> AS build-amd64
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -qy \
+      build-essential git flex bison autoconf automake libtool
+RUN mkdir -p /usr/src && cd /usr/src \
+    && git clone --depth 1 https://github.com/stedolan/jq.git \
+    && cd jq \
+    && git submodule update --init \
+    && autoreconf -fi \
+    && LDFLAGS="-static" \
+       ./configure --with-oniguruma=builtin --prefix=/usr/local \
+    && make -j$(nproc) \
+    && make install DESTDIR=/output
 
-# ── arm64 cross-compiled on amd64 ────────────────────────────────────────────
-FROM --platform=linux/amd64 <<BASECONTAINER>> AS build-arm64
-USER root
-RUN passwd -l root ; \
-    apk add --update --upgrade bash curl libtool && \
-    apk add --update --upgrade alpine-sdk git flex bison autoconf automake
-RUN apk add --no-cache gcc-aarch64-none-elf || \
-    apk add --no-cache musl-cross
-RUN mkdir -p /usr/src && \
-    cd /usr/src && \
-    git clone --depth 1 https://github.com/stedolan/jq.git && \
-    cd jq && \
-    git submodule update --init && \
-    autoreconf -fi && \
-    CC=aarch64-linux-musl-gcc \
-    AR=aarch64-linux-musl-ar \
-    RANLIB=aarch64-linux-musl-ranlib \
-    LDFLAGS="-static" \
-    ./configure \
-        --host=aarch64-linux-musl \
-        --with-oniguruma=builtin \
-        --prefix=/usr/local && \
-    make -j$(nproc) && \
-    make install DESTDIR=/output
+# ── arm64: cross-compiled on Ubuntu amd64 ────────────────────────────────────
+FROM --platform=linux/amd64 <<BUILDCONTAINER>> AS build-arm64
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -qy \
+      build-essential git flex bison autoconf automake libtool \
+      gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu libc6-dev-arm64-cross
+RUN mkdir -p /usr/src && cd /usr/src \
+    && git clone --depth 1 https://github.com/stedolan/jq.git \
+    && cd jq \
+    && git submodule update --init \
+    && autoreconf -fi \
+    && CC=aarch64-linux-gnu-gcc \
+       AR=aarch64-linux-gnu-ar \
+       RANLIB=aarch64-linux-gnu-ranlib \
+       LDFLAGS="-static" \
+       ./configure \
+           --host=aarch64-linux-gnu \
+           --with-oniguruma=builtin \
+           --prefix=/usr/local \
+    && make -j$(nproc) \
+    && make install DESTDIR=/output
 
-# ── arm/v7 cross-compiled on amd64 ───────────────────────────────────────────
-FROM --platform=linux/amd64 <<BASECONTAINER>> AS build-armv7
-USER root
-RUN passwd -l root ; \
-    apk add --update --upgrade bash curl libtool && \
-    apk add --update --upgrade alpine-sdk git flex bison autoconf automake && \
-    apk add --no-cache musl-cross
-RUN mkdir -p /usr/src && \
-    cd /usr/src && \
-    git clone --depth 1 https://github.com/stedolan/jq.git && \
-    cd jq && \
-    git submodule update --init && \
-    autoreconf -fi && \
-    CC=armv7-linux-musleabihf-gcc \
-    AR=armv7-linux-musleabihf-ar \
-    RANLIB=armv7-linux-musleabihf-ranlib \
-    CFLAGS="-march=armv7-a -mfpu=vfpv3-d16 -mfloat-abi=hard" \
-    LDFLAGS="-static" \
-    ./configure \
-        --host=armv7-linux-musleabihf \
-        --with-oniguruma=builtin \
-        --prefix=/usr/local && \
-    make -j$(nproc) && \
-    make install DESTDIR=/output
+# ── arm/v6: cross-compiled on Ubuntu amd64 ───────────────────────────────────
+FROM --platform=linux/amd64 <<BUILDCONTAINER>> AS build-armv6
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -qy \
+      build-essential git flex bison autoconf automake libtool \
+      gcc-arm-linux-gnueabihf binutils-arm-linux-gnueabihf libc6-dev-armhf-cross
+RUN mkdir -p /usr/src && cd /usr/src \
+    && git clone --depth 1 https://github.com/stedolan/jq.git \
+    && cd jq \
+    && git submodule update --init \
+    && autoreconf -fi \
+    && CC=arm-linux-gnueabihf-gcc \
+       AR=arm-linux-gnueabihf-ar \
+       RANLIB=arm-linux-gnueabihf-ranlib \
+       CFLAGS="-march=armv6 -mfpu=vfp -mfloat-abi=hard" \
+       LDFLAGS="-static" \
+       ./configure \
+           --host=arm-linux-gnueabihf \
+           --with-oniguruma=builtin \
+           --prefix=/usr/local \
+    && make -j$(nproc) \
+    && make install DESTDIR=/output
 
-# ── arm/v6 cross-compiled on amd64 ───────────────────────────────────────────
-FROM --platform=linux/amd64 <<BASECONTAINER>> AS build-armv6
-USER root
-RUN passwd -l root ; \
-    apk add --update --upgrade bash curl libtool && \
-    apk add --update --upgrade alpine-sdk git flex bison autoconf automake && \
-    apk add --no-cache musl-cross
-RUN mkdir -p /usr/src && \
-    cd /usr/src && \
-    git clone --depth 1 https://github.com/stedolan/jq.git && \
-    cd jq && \
-    git submodule update --init && \
-    autoreconf -fi && \
-    CC=armv6-linux-musleabihf-gcc \
-    AR=armv6-linux-musleabihf-ar \
-    RANLIB=armv6-linux-musleabihf-ranlib \
-    CFLAGS="-march=armv6 -mfpu=vfp -mfloat-abi=hard" \
-    LDFLAGS="-static" \
-    ./configure \
-        --host=armv6-linux-musleabihf \
-        --with-oniguruma=builtin \
-        --prefix=/usr/local && \
-    make -j$(nproc) && \
-    make install DESTDIR=/output
-
-# ── Final image ───────────────────────────────────────────────────────────────
+# ── Final Alpine image ────────────────────────────────────────────────────────
 FROM <<BASECONTAINER>>
 LABEL maintainer="docker@intrepid.de"
 ARG TARGETARCH
@@ -106,8 +75,8 @@ RUN case "${TARGETARCH}/${TARGETVARIANT}" in \
       "arm/v7")   cp /jq-armv7 /usr/local/bin/jq ;; \
       "arm/v6")   cp /jq-armv6 /usr/local/bin/jq ;; \
       *)          echo "Unsupported: ${TARGETARCH}/${TARGETVARIANT}"; exit 1 ;; \
-    esac && \
-    rm -f /jq-amd64 /jq-arm64 /jq-armv7 /jq-armv6 && \
-    chmod +x /usr/local/bin/jq
+    esac \
+    && rm -f /jq-amd64 /jq-arm64 /jq-armv7 /jq-armv6 \
+    && chmod +x /usr/local/bin/jq
 
 CMD ["/bin/bash"]
