@@ -79,11 +79,13 @@ LABEL maintainer="docker@intrepid.de"
 ARG TARGETARCH
 ARG TARGETVARIANT
 
+UER root
+
 COPY --from=build-amd64 /output/usr/local/bin/jq /jq-amd64
 COPY --from=build-arm64 /output/usr/local/bin/jq /jq-arm64
 COPY --from=build-armv6 /output/usr/local/bin/jq /jq-armv6
 
-RUN mkdir /usr/local/bin && \
+RUN mkdir /usr/local/bin ; \
     case "${TARGETARCH}/${TARGETVARIANT}" in \
       "amd64/")   cp /jq-amd64 /usr/local/bin/jq ;; \
       "arm64/")   cp /jq-arm64 /usr/local/bin/jq ;; \
